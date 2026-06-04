@@ -1,6 +1,9 @@
 package com.Backend.Spring.DTO.Request.User;
-public class UCreateRequest {
-    public static void main(String[] args) {
-        
-    }
-}
+
+// creating a dto
+public record UCreateRequest(
+    String username,
+    String email,
+    String password,
+    String role
+) { }
