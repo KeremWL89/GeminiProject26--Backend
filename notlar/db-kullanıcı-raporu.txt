@@ -1,0 +1,61 @@
+================================================================================
+                    KURUMSAL BT VARLIK YÖNETİM SİSTEMİ (ITAM)
+             VERİTABANI GÜVENLİĞİ VE YETKİLENDİRME YÖNETİM RAPORU
+================================================================================
+Tarih: 04.06.2026
+Sürüm: v1.0
+Hazırlayan: ITAM Proje Geliştirme Grubu
+
+1. GİRİŞ VE GÜVENLİK GEREKÇESİ
+--------------------------------------------------------------------------------
+Kurumsal BT Varlık Yönetim Sistemi (ITAM) mimarisinde, veritabanına tam yetkili 
+'sa' (System Administrator) kullanıcısı ile bağlanmak ciddi siber güvenlik 
+riskleri barındırmaktadır. Sızma ve veri ihlali senaryolarına karşı, "En Düşük 
+Yetki Prensibi" (Principle of Least Privilege) gereğince uygulamanın sadece kendi 
+sınırları içindeki veritabanına erişebilen, izole edilmiş özel bir SQL kullanıcısı 
+(itam_user) ile çalışması kararlaştırılmış ve uygulanmıştır.
+
+2. ADIM ADIM SQL SERVER KULLANICI OLUŞTURMA SÜRECİ
+--------------------------------------------------------------------------------
+SQL Server Management Studio (SSMS) üzerinde gerçekleştirilen izole kullanıcı 
+oluşturma adımları sırasıyla şunlardır:
+
+   A. Login Oluşturma:
+      * SSMS üzerinde 'sa' yetkisiyle SQL Server veritabanı sunucusuna bağlanıldı.
+      * Object Explorer -> Security -> Logins sekmesine sağ tıklanarak "New Login..." 
+        penceresi açıldı.
+      * Login name alanına "itam_user" yazıldı.
+      * "SQL Server authentication" seçeneği işaretlenerek uygulama için güçlü 
+        bir şifre tanımlandı.
+
+   B. Sunucu Rollerinin Sınırlandırılması (Server Roles):
+      * Server Roles sayfasında, oluşturulan kullanıcının sunucu genelinde tam yetkili 
+        (sysadmin, serveradmin vb.) olması engellendi. 
+      * Varsayılan ve en kısıtlı sunucu rolü olan "public" kutucuğu aynen seçili 
+        bırakılarak genel sistem güvenliği sağlandı.
+
+3. VERİTABANI BAĞLANTISI VE ROL TANIMLAMALARI (USER MAPPING)
+--------------------------------------------------------------------------------
+Uygulamanın (Hibernate ORM motoru ile) hem verileri yönetebilmesi hem de şema 
+güncellemelerini (ddl-auto=update) yerel SQL Server üzerinde gerçekleştirebilmesi 
+için "User Mapping" sekmesinde şu kritik roller tanımlanmıştır:
+
+   1. Üstteki veritabanı listesinden hedef veritabanı olan "ITAssetManagementDB" 
+      seçilerek işaretlendi.
+   2. Alt tarafta açılan veritabanı rol listesinden (Database role membership) 
+      uygulamanın sorunsuz çalışması için tam olarak şu 3 rol yetkilendirildi:
+      
+      * [X] db_datareader : Uygulamanın tablolardan veri okuyabilmesi 
+                            (SELECT sorguları) için zorunludur.
+      * [X] db_datawriter : Uygulamanın veri ekleme, güncelleme ve silme 
+                            (INSERT, UPDATE, DELETE) yapabilmesi için zorunludur.
+      * [X] db_ddladmin   : Hibernate'in veritabanı şemasını, ilişkisel UUID 
+                            (GUID) kısıtlamalarını ve indeksleri otomatik 
+                            oluşturup güncelleyebilmesi (DDL) için zorunludur.
+
+4. SONUÇ VE KAZANIMLAR
+--------------------------------------------------------------------------------
+Bu yetkilendirme şeması ile 'itam_user' kullanıcısı, ITAssetManagementDB dışında 
+hiçbir sistem veritabanına veya sunucu ayarına erişemez. Olası bir kaynak kod 
+sızıntısında sunucunun tamamı güvence altına alınmıştır.
+================================================================================

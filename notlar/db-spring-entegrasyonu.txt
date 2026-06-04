@@ -1,0 +1,65 @@
+================================================================================
+                    KURUMSAL BT VARLIK YÖNETİM SİSTEMİ (ITAM)
+             HASSAS VERİ GÜVENLİĞİ VE .ENV ENTEGRASYON RAPORU
+================================================================================
+Tarih: 04.06.2026
+Sürüm: v1.0
+Hazırlayan: ITAM Proje Geliştirme Grubu
+
+1. GİRİŞ VE MİMARİ YAKLAŞIM
+--------------------------------------------------------------------------------
+Veritabanı kullanıcı adları, şifreler ve gizli anahtarlar gibi hassas verilerin 
+kaynak kod içinde açıkça (hardcoded) yazılması ve GitHub/GitLab gibi platformlara 
+yüklenmesi kritik bir güvenlik ihlalidir. Bu sorunu çözmek amacıyla, modern yazılım 
+mimarilerinde altın standart kabul edilen "Çevre Değişkenleri" (Environment Variables) 
+ve harici yapılandırma dosyası yaklaşımı projeye başarıyla entegre edilmiştir.
+
+2. ADIM ADIM ENTEGRASYON VE GİZLİLİK ADIMLARI
+--------------------------------------------------------------------------------
+
+   Adım 1: Harici Kimlik Dosyasının (.env) Oluşturulması
+   Projenin kök dizininde (pom.xml dosyasının hemen yanında), sadece yerel 
+   bilgisayarda barınacak ve gizli şifreleri tutacak ".env" adında bir dosya 
+   oluşturulmuştur. Dosya içeriği şu şekilde yapılandırılmıştır:
+   
+   DB_USERNAME=itam_user
+   DB_PASSWORD=SQL_Server_Icin_Belirlenen_Güçlü_Şifre
+
+   Adım 2: Git Takibinden Çıkarma (.gitignore)
+   Oluşturulan .env dosyasının kazara GitHub reposuna push edilmesini ve internete 
+   sızmasını engellemek amacıyla, proje kökündeki ".gitignore" dosyasının içine 
+   harici dosya yolu kalıcı bir kural olarak eklenmiştir:
+   
+   # Hassas yerel çevre değişkenleri
+   .env
+
+   Adım 3: application.properties Merkezileştirme Ayarları
+   Spring Boot projesinin kalbi olan 'src/main/resources/application.properties' 
+   dosyası, harici .env dosyasından çevre değişkenlerini dinamik olarak besleyecek 
+   şekilde esnek bir yapıda güncellenmiştir. Güncellenen nihai konfigürasyon şeması:
+
+   spring.application.name=itam
+   server.port=8080
+   spring.datasource.url=jdbc:sqlserver://localhost;databaseName=ITAssetManagementDB;encrypt=true;trustServerCertificate=true;
+   spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
+   spring.datasource.username=${DB_USERNAME:itam_user}
+   spring.datasource.password=${DB_PASSWORD}
+   spring.jpa.hibernate.ddl-auto=update
+   spring.jpa.show-sql=true
+   spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.SQLServerDialect
+   debug=true
+
+3. REDIS VE BAĞLANTI KARARLILIĞI NOTU
+--------------------------------------------------------------------------------
+Projede Spring Data Redis bağımlılığı yüklü olduğundan, uygulamanın lokal ortamda 
+kurulu olmayan bir Redis sunucusuna takılıp çökmesini engellemek adına 
+application.properties dosyasına "spring.cache.type=redis" komutu eklenmemiştir. 
+Böylece uygulamanın doğrudan yerel MSSQL veritabanı üzerinden sorunsuz ve kararlı 
+bir şekilde ayağa kalkması garanti altına alınmıştır.
+
+4. SONUÇ
+--------------------------------------------------------------------------------
+Bu mimari hamle ile projenin kaynak kodları, hiçbir şifre veya kullanıcı adı 
+sızıntısı riski taşımadan açık kaynak kodlu olarak GitHub üzerinde güvenle 
+paylaşılabilir ve dağıtılabilir duruma getirilmiştir.
+================================================================================
