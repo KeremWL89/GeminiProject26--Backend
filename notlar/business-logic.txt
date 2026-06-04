@@ -1,0 +1,45 @@
+Harika bir soru! Mimariyi kurduktan sonra işin beyni olan Service (İş Mantığı) katmanını en baştan planlamak tam bir profesyonel yaklaşımdır. Sistemin kalbi olan bu katmanda, tüm iş kurallarını, validasyonları ve veri manipülasyonlarını (@Service) kurgulayacağız.
+
+Yazacağımız temel servisler ve üstlenecekleri kurumsal görevler şunlar olacak:
+
+### 1. UserService (Kullanıcı ve Personel Yönetimi Servisi)
+
+* **Temel Görevi:** Sistemdeki personellerin ve yöneticilerin kayıt, listeleme ve statü süreçlerini yönetir.
+* 
+**İş Kuralları:** Sistemimizde fiziksel silme (Hard Delete) yoktur; bunun yerine Soft Delete yaklaşımını uygular. Bu servis, bir personel işten ayrıldığında statüsünü `DEACTIVATED` (pasif) olarak günceller. Ayrıca bu servis, bir kullanıcı deaktif edildiğinde o an üzerinde bulunan cihazların boşa çıkması (null yapılması) için sistemin diğer parçalarıyla haberleşir.
+
+
+
+### 2. AssetService (Donanım ve Zimmet Servisi)
+
+* 
+**Temel Görevi:** Şirkete ait laptop, sunucu, router gibi tüm fiziksel cihazların yaşam döngüsünü kontrol eder.
+
+
+* **İş Kuralları:** En yoğun iş mantığı buradadır. Bir cihazın depoda mı (`SPARE`) yoksa bir personelde mi zimmetli olduğunu denetler. Yeni bir zimmet ataması yapılacağı zaman, kullanıcının aktif olup olmadığını kontrol eder. Ayrıca sık sorgulanan varlık listelerini Redis belleğine yazar, cihazda bir güncelleme olduğunda ise eski önbelleği temizleyerek (Cache Eviction) MSSQL'e binen yükü hafifletir.
+
+
+
+### 3. LicenseService (Lisans ve Kapasite Servisi)
+
+* 
+**Temel Görevi:** Kurumsal yazılım lisanslarının (Windows Server, SQL Server vb.) takibini ve atamalarını yapar.
+
+
+* **İş Kuralları:** Lisans maliyetlerini optimize etmek için çalışır. Bir cihaza yeni bir lisans atanacağı zaman, veritabanındaki `total_slots` (kurulabilecek maksimum cihaz sayısı) değerini kontrol eder. Eğer limit dolmuşsa, servis bu atamayı reddederek kaçak kullanımı engeller.
+
+
+
+### 4. AuditLogService (İzlenebilirlik ve Denetim Servisi)
+
+* 
+**Temel Görevi:** Sistemde yapılan her kritik hareketin kronolojik bir "sinema şeridini" oluşturur.
+
+
+* **İş Kuralları:** Bu servis genellikle tek başına çalışmaz; `UserService` veya `AssetService` içinde bir veri değiştiğinde arka planda çağrılır. Cihazın IP adresi değiştiğinde veya zimmeti aktarıldığında işlemi kimin yaptığını, değişikliğin JSON formatındaki eski değerini (`old_value`) ve yeni değerini (`new_value`) asla silinmeyecek şekilde veritabanına işler.
+
+
+
+---
+
+Bu yapı sayesinde dışarıdan (React arayüzünden) gelen tüm istekler Controller katmanından geçip, bu sıkı denetimli servislerde işlenecek ve veritabanına en temiz haliyle ulaşacaktır.
