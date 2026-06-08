@@ -1,0 +1,50 @@
+Bu hata mesajı, Spring Boot dünyasında veritabanı bağlantısı kurmaya çalışırken karşılaşılan **en meşhur** hatalardan biridir.
+
+Hata tam olarak şunu söylüyor: *"Ben `localhost` üzerindeki `1433` numaralı porta gidip MSSQL veritabanının kapısını çaldım (TCP/IP protokolüyle), ama kapı duvar, kimse açmıyor."*
+
+Daha önce SSD diskini yeni bir bilgisayara taşıdığını konuşmuştuk. Bu taşıma işleminden veya SQL Server'ın varsayılan ayarlarından dolayı, **SQL Server'ın TCP/IP bağlantıları şu anda kapalı durumda.** Java (JDBC), veritabanına bağlanmak için zorunlu olarak TCP/IP kullanır. SSMS üzerinden (Windows Authentication ile) bağlanabiliyor olman Java'nın da bağlanabileceği anlamına gelmez.
+
+Bu kapıyı açmak (TCP/IP'yi aktifleştirmek) için şu adımları sırasıyla yapmalısın:
+
+### 🛠️ Çözüm Adımları (SQL Server TCP/IP Aktifleştirme)
+
+**1. SQL Server Configuration Manager'ı Aç**
+
+* Başlat menüsüne tıkla ve **"SQL Server Configuration Manager"** yazıp yönetici olarak çalıştır. (Eğer bulamazsan `C:\Windows\SysWOW64\SQLServerManager15.msc` gibi bir yolda olabilir, sürümüne göre 15, 16 değişebilir).
+
+**2. TCP/IP Protokolünü Etkinleştir**
+
+* Sol menüden **SQL Server Network Configuration** (SQL Server Ağ Yapılandırması) seçeneğini genişlet.
+* Altındaki **Protocols for SQLEXPRESS** (veya senin sunucu adın neyse) seçeneğine tıkla.
+* Sağ tarafta `Shared Memory`, `Named Pipes` ve `TCP/IP` göreceksin.
+* **TCP/IP** muhtemelen *Disabled* (Devre Dışı) durumdadır. Üzerine sağ tıkla ve **Enable** (Etkinleştir) de. Çıkan uyarıya "Tamam" de.
+
+**3. Portu (1433) Sabitle**
+
+* Etkinleştirdiğin **TCP/IP**'ye sağ tıkla ve **Properties** (Özellikler) seç.
+* Üstteki **IP Addresses** (IP Adresleri) sekmesine geç.
+* En aşağıya, **IPAll** bölümüne kadar kaydır.
+* Orada `TCP Dynamic Ports` kısmında bir sayı varsa onu **tamamen sil (boş bırak)**.
+* Altındaki **TCP Port** kısmına **1433** yaz.
+* *Apply (Uygula)* ve *OK* diyerek pencereleri kapat.
+
+**4. Servisi Yeniden Başlat (Çok Önemli)**
+
+* Sol menüde en üstteki **SQL Server Services** (SQL Server Servisleri) kısmına tıkla.
+* Sağ tarafta **SQL Server (SQLEXPRESS)** servisini bul, sağ tıkla ve **Restart** (Yeniden Başlat) de.
+
+---
+
+### 📝 Son Kontrol: `application.properties`
+
+SQL Server tarafındaki kapıyı açtık. Şimdi Spring Boot'un doğru adrese gittiğinden emin olalım. `src/main/resources/application.properties` dosyanı aç. JDBC URL kısmının tam olarak şu formatta olduğundan emin ol:
+
+```properties
+# Eğer localhost yerine bilgisayar adı veya nokta kullanıyorsan onları da yazabilirsin ama genelde localhost:1433 çalışır.
+spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=itam_db;encrypt=true;trustServerCertificate=true
+
+```
+
+*(Not: `itam_db` kısmını kendi veritabanı adınla değiştirmeyi unutma).*
+
+Bu ayarları yapıp SQL Server'ı yeniden başlattıktan sonra IntelliJ'de tekrar yeşil tuşa bas (veya `mvn spring-boot:run` yap). Spring Boot sorunsuzca veritabanına bağlanacaktır! Sonucu bekliyorum.
