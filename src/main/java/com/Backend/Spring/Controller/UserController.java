@@ -1,12 +1,13 @@
 package com.Backend.Spring.Controller;
 
+import com.Backend.Spring.DTO.Request.User.UCreateRequest;
 import com.Backend.Spring.DTO.Response.UResponse;
+import com.Backend.Spring.Model.Entity.UserModel;
 import com.Backend.Spring.Service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,6 +26,15 @@ public class UserController {
         if(data.isEmpty()) return ResponseEntity.noContent().build();
 
         return ResponseEntity.ok(data);
+
+    }
+
+    @PostMapping("/CreateUser")
+    public ResponseEntity<UResponse> createUser(@RequestBody UCreateRequest request){
+
+        UResponse resp = userService.createUser(request);
+
+        return ResponseEntity.ok(resp);
 
     }
 

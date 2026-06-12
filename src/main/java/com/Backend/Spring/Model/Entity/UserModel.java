@@ -16,8 +16,10 @@ import java.util.UUID;
 @Builder
 public class UserModel {
 
+    // @GeneratedValue(strategy = GenerationType.UUID) ID must be created at db
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(insertable = false, updatable = false) // dont include this colum when insert into executes
+    @GeneratedValue(strategy = GenerationType.AUTO) // this value handled auto
     private UUID id;
 
     //bildiğin sql tablo querysi gibi
