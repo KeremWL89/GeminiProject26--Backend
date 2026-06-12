@@ -4,6 +4,6 @@ package com.Backend.Spring.DTO.Request.User;
 public record UCreateRequest(
     String username,
     String email,
-    String password,
+    String password_hash,
     String role
 ) { }

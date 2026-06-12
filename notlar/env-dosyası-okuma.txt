@@ -1,0 +1,93 @@
+Hatanın `Login failed for user '${DB_LOGIN}'` şeklinde dönmesi bize çok net ve kesin bir ipucu veriyor abi: Spring Boot, `${DB_LOGIN}` ifadesini bir değişken olarak **hiç çözemiyor**, yani içeriğe dokunmadan string olarak doğrudan MSSQL'e gönderiyor. Eklenti veya Maven o dosyayı bir şekilde göremiyor ya da yakalayamıyor.
+
+Madem projenin ayağa kalkması acil ve seni çok uğraştırdı, bu `.env` okuma/okuyamama krizini kökten çözmek için **Spring Boot'un kendi kod yapısını** kullanalım. Ne eklentiye güvenelim, ne Maven'a, ne de IDE ayarlarına. İşi doğrudan Java koduyla bitirelim.
+
+###  %100 Çözüm: `.env` Dosyasını Java ile Programatik Okumak
+
+Spring Boot projenin ana sınıfına (yani içinde `public static void main` metodu olan, `@SpringBootApplication` notasyonuna sahip class'a) küçük bir kod ekleyeceğiz. Bu kod, proje çalışmaya başlarken `.env` dosyasını satır satır okuyup sistemin hafızasına (System Properties) yükleyecek. Böylece Spring, `application.properties` içindeki değişkenleri şak diye tanıyacak.
+
+**1. Adım: Ana Sınıfını (Application.java) Şununla Güncelle:**
+
+Projenin başlangıç sınıfını aç ve `main` metodunu şu şekilde düzenle:
+
+```java
+package com.example.itam; // Senin kendi paket adın neyse o kalsın
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+
+@SpringBootApplication
+public class ItamApplication { // Sınıf adın neyse o kalsın
+
+    public static void main(String[] args) {
+        // --- .ENV DOSYASINI PROGRAMATİK OKUMA KODU ---
+        try {
+            if (Files.exists(Paths.get(".env"))) {
+                List<String> lines = Files.readAllLines(Paths.get(".env"));
+                for (String line : lines) {
+                    line = line.trim();
+                    // Boş satırları veya yorum satırlarını atla
+                    if (line.isEmpty() || line.startsWith("#")) continue;
+
+                    String[] parts = line.split("=", 2);
+                    if (parts.length == 2) {
+                        String key = parts[0].trim();
+                        String value = parts[1].trim();
+                        // Sistem çevre değişkeni olarak belleğe yaz
+                        System.setProperty(key, value);
+                    }
+                }
+                System.out.println(">>> .env dosyası başarıyla belleğe yüklendi! <<<");
+            } else {
+                System.out.println(">>> UYARI: Proje kök dizininde .env dosyası bulunamadı! <<<");
+            }
+        } catch (IOException e) {
+            System.err.println(".env dosyası okunurken hata oluştu: " + e.getMessage());
+        }
+        // ---------------------------------------------
+
+        SpringApplication.run(ItamApplication.class, args);
+    }
+}
+
+```
+
+---
+
+### 2. Adım: `.env` Dosyasının Adlandırmasını Kontrol Et
+
+Hata mesajında `${DB_LOGIN}` yazıyor ama bir önceki mesajda `.env` içine `DB_USER` yazmıştık. İsimlerin birebir eşleştiğinden emin olalım:
+
+`.env` dosyanın içeriğini tam olarak şu şekilde yap (boşluksuz):
+
+```env
+DB_PORT=1433
+DB_LOGIN=sa
+DB_PWD=abc
+
+```
+
+*(Buradaki `sa` ve `abc` değerlerini kendi MS SQL Server kullanıcı adı ve şifrenle değiştir).*
+
+---
+
+### 3. Adım: `application.properties` Kontrolü
+
+Properties dosyanı da bu değişken isimlerine göre sağlama al:
+
+```properties
+spring.datasource.url=jdbc:sqlserver://localhost:${DB_PORT};databaseName=itam_db;encrypt=true;trustServerCertificate=true;
+spring.datasource.username=${DB_LOGIN}
+spring.datasource.password=${DB_PWD}
+
+```
+
+---
+
+###  Şimdi Çalıştır!
+
+Bu programatik yöntem sayesinde ister yeşil Play butonuna bas, ister Maven terminalinden çalıştır, Java kodu ilk satırda `.env` dosyasını bulup içindekileri `System.setProperty` ile belleğe çakacağı için Spring Boot sorunsuz bir şekilde veritabanına bağlanacaktır. Tekrar dener misin, loglarda `>>> .env dosyası başarıyla belleğe yüklendi! <<<` yazısını göreceksin.

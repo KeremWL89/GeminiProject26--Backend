@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name="Users")
+@Table(name="[Users]" , schema = "dbo")
 @Getter
 @Setter
 @NoArgsConstructor
