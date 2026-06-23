@@ -13,4 +13,7 @@ public interface UserRepository extends JpaRepository<UserModel , UUID> {
     // kısaca "select * from Users where status= ?"
     List<UserModel> findByStatus(String status);
 
+
+    UserModel findByUsername(String username);
+
 }

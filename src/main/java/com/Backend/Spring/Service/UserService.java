@@ -7,6 +7,9 @@ import com.Backend.Spring.Model.Entity.UserModel;
 import com.Backend.Spring.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -15,7 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserMapper userMapper;
     private final UserRepository userRepository;
@@ -39,4 +42,18 @@ public class UserService {
 
         return userMapper.toDTO(newUser);
     }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+        Users user = userRepository.findByUsername(username);
+
+        if(user == null)
+            System.out.println("user not found");
+        throw new UsernameNotFoundException("user not found");
+
+        return new // user principle
+
+    }
 }
+

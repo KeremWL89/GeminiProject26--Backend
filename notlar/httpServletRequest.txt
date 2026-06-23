@@ -1,0 +1,66 @@
+**`HttpServletRequest`**, Java Servlet API'sinin en temel arayüzlerinden (interface) biridir ve istemciden (tarayıcı, React frontend, Postman vb.) sunucuya gelen **tüm HTTP isteklerini (request) temsil eder**.
+
+Spring Boot (veya Spring MVC) kullanırken, arka planda hala Java'nın standart Servlet mimarisi (Tomcat vb. gömülü sunucular üzerinden) çalışır. Spring, gelen HTTP isteklerini sarmalayarak bize daha kolay bir kullanım sunar ama ihtiyaç duyduğumuzda `HttpServletRequest` nesnesine doğrudan erişmemize de izin verir.
+
+Sisteminizdeki rolünü, ne işe yaradığını ve Spring içinde nasıl kullanıldığını şu şekilde özetleyebiliriz:
+
+### 1. İçinde Hangi Bilgileri Barındırır?
+
+Gelen bir HTTP isteğine dair her türlü ham veriyi `HttpServletRequest` üzerinden okuyabilirsiniz:
+
+* **HTTP Metodu:** İstek GET mi, POST mu, PUT mu, DELETE mi? (`request.getMethod()`)
+* **Headerlar (Başlıklar):** İstekle gelen meta veriler, özellikle yetkilendirme için kullanılan `Authorization` başlığı (Bearer token) veya `User-Agent` bilgisi. (`request.getHeader("Authorization")`)
+* **URL / URI Bilgisi:** İsteğin hangi adrese yapıldığı. (`request.getRequestURI()`)
+* **Query Parametreleri:** URL'in sonundaki parametreler. (`request.getParameter("page")`)
+* **İstemci IP Adresi:** İsteği atan bilgisayarın veya proxy'nin IP adresi. (`request.getRemoteAddr()`)
+* **Cookies (Çerezler):** İstekle gelen çerezlerin listesi. (`request.getCookies()`)
+
+---
+
+### 2. Spring Web / Spring Security Dünyasında Nerede Karşımıza Çıkar?
+
+#### A) Güvenlik Filtrelerinde (Filter Chain)
+
+Projenizde kurguladığınız **Spring Security ve JWT** yapısında bu nesne hayati bir öneme sahiptir. Yazdığınız veya hazır kullandığınız filtreler (örneğin `OncePerRequestFilter` veya `JwtAuthenticationFilter`) metotlarında parametre olarak `HttpServletRequest` alır.
+
+* **Senaryo:** React arayüzünden gelen isteklerin başlığındaki JWT (Token) değerini yakalamak için kullanılır:
+```java
+String authHeader = request.getHeader("Authorization");
+if (authHeader != null && authHeader.startsWith("Bearer ")) {
+    String token = authHeader.substring(7);
+    // Token doğrulama işlemleri...
+}
+
+```
+
+
+
+#### B) Controller Katmanında
+
+Spring MVC, normal şartlarda `@RequestParam`, `@PathVariable` veya `@RequestBody` gibi anotasyonlarla gelen verileri bizim için otomatik olarak Java nesnelerine eşler. Ancak istek atan kullanıcının IP adresini loglamak veya ham "Header" bilgilerine doğrudan erişmek istiyorsanız, `HttpServletRequest` nesnesini metot parametresi olarak doğrudan talep edebilirsiniz:
+
+```java
+@RestController
+@RequestMapping("/api/assets")
+public class AssetController {
+
+    @GetMapping("/test")
+    public ResponseEntity<String> testRequest(HttpServletRequest request) {
+        String clientIp = request.getRemoteAddr();
+        String userAgent = request.getHeader("User-Agent");
+
+        return ResponseEntity.ok("İstek atan IP: " + clientIp + ", Cihaz: " + userAgent);
+    }
+}
+
+```
+
+*Spring, metoda bu parametreyi yazdığınızı gördüğü an, o anki aktif HTTP isteğini otomatik olarak bu değişkene enjekte eder (Dependency Injection).*
+
+---
+
+### Özetle
+
+Spring Boot kullanırken çoğu zaman ham `HttpServletRequest` ile uğraşmayız; Spring bizim yerimize verileri ayıklar. Ancak **JWT Token okuma, özel güvenlik filtreleri yazma, kullanıcının IP adresini tespit edip Audit Log (denetim günlüğü) tablosuna kaydetme** gibi kurumsal ve altyapısal senaryolarda doğrudan kapısını çalacağımız yegane nesnedir.
+
+

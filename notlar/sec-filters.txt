@@ -1,0 +1,42 @@
+Spring Security çekirdeğinde (arka planda sırasını ve yönetimini belirleyen `FilterOrderRegistration` sınıfında) kayıtlı **30'dan fazla (genellikle sürümüne göre 32-34 arası) varsayılan filtre** bulunur.
+
+Ancak uygulamanız ayağa kalktığında bu filtrelerin **hepsi birden aynı anda aktif olmaz**. Sizin yaptığınız konfigürasyona göre (örneğin JWT mi kullanıyorsunuz, form login mi açtınız, CSRF'i kapattınız mı gibi) Spring Security bu havuzdan sadece gerekli olanları seçer ve bir zincir haline getirir.
+
+Varsayılan filtrelerin mantıksal sıralaması ve en popüler olanları şöyledir:
+
+### Spring Security Filtre Zinciri Sıralaması (Önemli Filtreler)
+
+Filtreler arka planda tam olarak şu sıraya göre dizilir (en baştan en sona doğru):
+
+1. **`DisableEncodeUrlFilter`**: URL'lerin session ID içerecek şekilde encode edilmesini engeller.
+2. **`ForceEagerSessionCreationFilter`**: İstek geldiğinde session oluşturulmasını zorunlu kılar (eğer konfigüre edildiyse).
+3. **`ChannelProcessingFilter`**: İsteklerin HTTP mi yoksa HTTPS üzerinden mi gelmesi gerektiğini denetler.
+4. **`WebAsyncManagerIntegrationFilter`**: Spring MVC'nin asenkron istek yapılarıyla güvenlik bağlamını entegre eder.
+5. **`SecurityContextHolderFilter`** *(Eski adıyla SecurityContextPersistenceFilter)*: Güvenlik bağlamını (`SecurityContext`) istek boyunca taşır.
+6. **`ConcurrentSessionFilter`**: Aynı kullanıcının aynı anda kaç farklı oturum açabileceğini kontrol eder.
+7. **`HeaderWriterFilter`**: Tarayıcılar için güvenlik başlıkları ekler.
+8. **`CorsFilter`**: Tarayıcıların kökenler arası istek (CORS) kurallarını işletir.
+9. **`CsrfFilter`**: CSRF saldırılarına karşı koruma sağlar.
+10. **`LogoutFilter`**: `/logout` isteklerini yakalar ve oturumu kapatır.
+11. **`UsernamePasswordAuthenticationFilter`**: Form tabanlı giriş işlemlerini yönetir.
+12. **`DefaultLoginPageGeneratingFilter`** / **`DefaultLogoutPageGeneratingFilter`**: Eğer kendiniz bir login sayfası yazmadıysanız, Spring'in o klasik mavi logolu hazır giriş/çıkış sayfalarını üreten filtrelerdir.
+13. **`BasicAuthenticationFilter`**: HTTP Basic auth başlıklarını inceler.
+14. **`RequestCacheAwareFilter`**: Kullanıcı giriş yapmadan önce gitmek istediği sayfayı hafızada tutar, giriş yaptıktan sonra otomatik olarak o sayfaya yönlendirir.
+15. **`SecurityContextHolderAwareRequestFilter`**: HttpServletRequest metodlarının (`isUserInRole`, `getUserPrincipal`) Spring Security ile uyumlu çalışmasını sağlar.
+16. **`AnonymousAuthenticationFilter`**: Eğer kullanıcı henüz giriş yapmadıysa, sisteme anonim (`ANONYMOUS`) bir rol atayarak boş geçmesini engeller, böylece hata alınmasının önüne geçilir.
+17. **`SessionManagementFilter`**: Oturum sabitlemesi (session fixation) gibi saldırıları engeller ve session politikalarını yönetir.
+18. **`ExceptionTranslationFilter`**: Üstteki filtrelerde veya yetkilendirmede oluşan hataları yakalayıp düzgün HTTP kodlarına (401/403) çevirir.
+19. **`AuthorizationFilter`** *(Eski adıyla FilterSecurityInterceptor)*: Zincirin en sonundaki nihai muhafızdır; kullanıcının gitmek istediği endpoint'e yetkisinin olup olmadığına bakar.
+
+---
+
+### Kendi Filtrenizi Nereye Koymalısınız?
+
+Mimarinizde yazacağınız **`JwtAuthenticationFilter`** gibi özel (custom) filtreler bu 30 küsur filtrenin arasına manuel olarak yerleştirilir. Genellikle en mantıklı yer, form login'in hemen öncesidir:
+
+```java
+http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+```
+
+> **Küçük bir ipucu:** Uygulamanız ayağa kalkarken log seviyesini `logging.level.org.springframework.security=DEBUG` olarak ayarlarsanız, Spring Boot o anki konfigürasyonunuzla tam olarak **kaç tane ve hangi isimde** filtrenin aktif olduğunu konsola liste halinde basacaktır.
