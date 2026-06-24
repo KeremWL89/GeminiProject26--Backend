@@ -1,5 +1,7 @@
 package com.Backend.Spring.Security.Config;
 
+import com.Backend.Spring.Service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -16,7 +18,8 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity      // i have security rules so rather than applying default , apply mine
 public class SecurityConfig {
 
-    private UserDetailsService userDetailsService;
+    @Autowired
+    private UserService userService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws  Exception{
@@ -36,10 +39,12 @@ public class SecurityConfig {
     public AuthenticationProvider authenticationProvider(){
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
 
+        provider.setUserDetailsService(userService);
+
         //here will be encoding processes.
         provider.setPasswordEncoder(NoOpPasswordEncoder.getInstance());
 
-        provider.setUserDetailsPasswordService(userDetailsService);
+
 
         return provider;
     }

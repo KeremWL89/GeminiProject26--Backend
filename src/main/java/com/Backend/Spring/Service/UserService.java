@@ -4,9 +4,11 @@ import com.Backend.Spring.DTO.Request.User.UCreateRequest;
 import com.Backend.Spring.DTO.Response.UResponse;
 import com.Backend.Spring.Mapper.UserMapper;
 import com.Backend.Spring.Model.Entity.UserModel;
+import com.Backend.Spring.Model.Entity.UserPrincipal;
 import com.Backend.Spring.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,7 +22,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class UserService implements UserDetailsService {
 
+    @Autowired
     private final UserMapper userMapper;
+
+    @Autowired
     private final UserRepository userRepository;
 
     public List<UResponse> getAllActiveUsers(){
@@ -46,13 +51,13 @@ public class UserService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        Users user = userRepository.findByUsername(username);
+        UserModel user = userRepository.findByUsername(username);
 
-        if(user == null)
+        if(user == null) {
             System.out.println("user not found");
-        throw new UsernameNotFoundException("user not found");
-
-        return new // user principle
+            throw new UsernameNotFoundException("user not found");
+        }
+        return new UserPrincipal(user); // user principle
 
     }
 }
