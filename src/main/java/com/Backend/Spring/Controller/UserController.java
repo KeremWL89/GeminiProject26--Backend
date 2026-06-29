@@ -38,4 +38,11 @@ public class UserController {
 
     }
 
+    @PostMapping("/Register")
+    public ResponseEntity<UserModel> registerUser(@RequestBody UCreateRequest request){
+        UserModel user = userService.register(request);
+
+        return ResponseEntity.ok(user);
+    }
+
 }

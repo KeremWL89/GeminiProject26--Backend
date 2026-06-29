@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -24,6 +25,9 @@ public class UserService implements UserDetailsService {
 
     @Autowired
     private final UserMapper userMapper;
+
+    // this is for encryption   , encrypt it 10 times
+    private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(10);
 
     @Autowired
     private final UserRepository userRepository;
@@ -46,6 +50,19 @@ public class UserService implements UserDetailsService {
         UserModel newUser = userRepository.save(savedUser);
 
         return userMapper.toDTO(newUser);
+    }
+
+
+    public UserModel register(UCreateRequest userRequest){
+
+        UserModel savedUser= userMapper.toModel(userRequest);
+
+        // encrypt the userpassword , set it on the model
+        savedUser.setPassword_hash(encoder.encode(userRequest.password_hash()));
+        savedUser.setStatus("ACTIVE");
+
+        return userRepository.save(savedUser);
+
     }
 
     @Override
