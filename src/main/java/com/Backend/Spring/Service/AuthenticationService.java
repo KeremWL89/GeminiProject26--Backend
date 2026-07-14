@@ -1,6 +1,7 @@
 package com.Backend.Spring.Service;
 
 import com.Backend.Spring.DTO.Request.User.UserLoginRequest;
+import com.Backend.Spring.Security.JWT.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,6 +16,9 @@ public class AuthenticationService {
     @Autowired
     AuthenticationManager authenticationManager;
 
+    @Autowired
+    JwtService jwtService;
+
     public String verify(UserLoginRequest userLoginRequest){
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(
@@ -23,7 +27,7 @@ public class AuthenticationService {
                 ));
 
         if(authentication.isAuthenticated())
-            return "succes";
+            return jwtService.generateToken(userLoginRequest.getUsername());
 
         return "failure";
     }
