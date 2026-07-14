@@ -1,5 +1,6 @@
 package com.Backend.Spring.Security.Config;
 
+import com.Backend.Spring.Security.JWT.JwtFilter;
 import com.Backend.Spring.Service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration          //this is a config class look up when starting
 @EnableWebSecurity      // i have security rules so rather than applying default , apply mine
@@ -23,6 +25,9 @@ public class SecurityConfig {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private JwtFilter jwtFilter;
 
 
     @Bean
@@ -36,6 +41,7 @@ public class SecurityConfig {
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class) // before unameFilter use JWTfilter
                 .build();
 
 
