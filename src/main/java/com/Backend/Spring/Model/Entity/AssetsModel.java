@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.UUID;
 
 @Entity
-@Table(name = "[Assests]" ,  schema = "[dbo]")
+@Table(name = "[Assets]" , schema = "[dbo]")
 @Getter
 @Setter
 @NoArgsConstructor
