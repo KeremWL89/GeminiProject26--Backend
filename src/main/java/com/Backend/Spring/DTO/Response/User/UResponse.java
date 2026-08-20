@@ -1,4 +1,4 @@
-package com.Backend.Spring.DTO.Response;
+package com.Backend.Spring.DTO.Response.User;
 
 import java.util.UUID;
 

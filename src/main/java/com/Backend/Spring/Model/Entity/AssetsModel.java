@@ -1,6 +1,7 @@
 package com.Backend.Spring.Model.Entity;
 
 
+import com.Backend.Spring.Model.Enums.AssetType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,8 +26,9 @@ public class AssetsModel {
     @Column(nullable = false ,length = 100)
     private String asset_name;
 
-    @Column(nullable = false , length = 50)
-    private String asset_type;
+    @Enumerated(EnumType.STRING)
+    @Column( name = "asset_type",nullable = false , length = 50)
+    private AssetType asset_type;
 
     @Column(nullable = true)
     private String ip_address;

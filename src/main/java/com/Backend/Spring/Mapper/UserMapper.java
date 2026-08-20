@@ -2,7 +2,7 @@ package com.Backend.Spring.Mapper;
 
 
 import com.Backend.Spring.DTO.Request.User.UCreateRequest;
-import com.Backend.Spring.DTO.Response.UResponse;
+import com.Backend.Spring.DTO.Response.User.UResponse;
 import com.Backend.Spring.Model.Entity.UserModel;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;

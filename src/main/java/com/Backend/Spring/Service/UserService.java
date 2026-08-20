@@ -1,8 +1,7 @@
 package com.Backend.Spring.Service;
 
 import com.Backend.Spring.DTO.Request.User.UCreateRequest;
-import com.Backend.Spring.DTO.Request.User.UserLoginRequest;
-import com.Backend.Spring.DTO.Response.UResponse;
+import com.Backend.Spring.DTO.Response.User.UResponse;
 import com.Backend.Spring.Mapper.UserMapper;
 import com.Backend.Spring.Model.Entity.UserModel;
 import com.Backend.Spring.Model.Entity.UserPrincipal;
@@ -10,15 +9,11 @@ import com.Backend.Spring.Repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 import java.util.stream.Collectors;
